@@ -1,0 +1,102 @@
+@page "/chat"
+@inject IReviewerChatService ChatService
+
+<PageTitle>Reviewer Agent Chat</PageTitle>
+
+<div class="container-fluid">
+    <h1 class="display-6 fw-bold mb-3 text-info">
+        <i class="bi bi-chat-dots"></i> Reviewer Agent Chat
+    </h1>
+
+    @if (Index.LastEvaluation is null)
+    {
+        <div class="alert alert-warning">
+            ⚠ Please evaluate a proposal first on the <a href="/">Home</a> page.
+        </div>
+    }
+    else
+    {
+        <p class="text-secondary mb-3">
+            Ask questions such as: <em>Why low score? How to improve? What are the main risks?</em>
+        </p>
+
+        <div class="card glass-card mb-3">
+            <div class="card-body">
+                <div class="input-group input-group-lg">
+                    <InputText @bind-Value="_question" class="form-control bg-dark text-light border-secondary"
+                               placeholder="Enter your question..." @onkeydown="OnKeyDown" />
+                    <button class="btn btn-primary" @onclick="Ask" disabled="@_busy">
+                        @if (_busy)
+                        {
+                            <span class="spinner-border spinner-border-sm"></span>
+                        }
+                        else
+                        {
+                            <i class="bi bi-send"></i>
+                        }
+                        Ask Reviewer
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="chat-history">
+            @foreach (var msg in _history)
+            {
+                if (msg.Role == "user")
+                {
+                    <div class="chat-bubble user mb-3">
+                        <strong>👤 You</strong><br />@msg.Text
+                    </div>
+                }
+                else
+                {
+                    <div class="chat-bubble ai mb-3">
+                        <strong>🤖 Reviewer Agent</strong><br />
+                        <div style="white-space:pre-wrap;">@msg.Text</div>
+                    </div>
+                }
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private string _question = "";
+    private bool _busy;
+    private List<(string Role, string Text)> _history = new();
+
+    private async Task OnKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+            await Ask();
+    }
+
+    private async Task Ask()
+    {
+        if (string.IsNullOrWhiteSpace(_question) || Index.LastEvaluation is null)
+            return;
+
+        var q = _question.Trim();
+        _question = "";
+        _history.Add(("user", q));
+        _busy = true;
+        StateHasChanged();
+
+        try
+        {
+            var eval = Index.LastEvaluation;
+            var summary = $"Final Score: {eval.FinalScore}, Decision: {eval.Decision}";
+            var answer = await ChatService.AskAsync(q, eval.ProposalText, summary);
+            _history.Add(("ai", answer));
+        }
+        catch (Exception ex)
+        {
+            _history.Add(("ai", $"Error: {ex.Message}"));
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}
