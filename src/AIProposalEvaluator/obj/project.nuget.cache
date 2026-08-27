@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "0qZ3gf5Qfms=",
+  "success": true,
+  "projectFilePath": "C:\\Git Hub Projects\\Ai-R-D-PROPOSAL-EVALUATION-SYSTEM\\src\\AIProposalEvaluator\\AIProposalEvaluator.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Asus\\.nuget\\packages\\microsoft.aspnetcore.app.internal.assets\\10.0.10\\microsoft.aspnetcore.app.internal.assets.10.0.10.nupkg.sha512"
+  ],
+  "logs": []
+}
