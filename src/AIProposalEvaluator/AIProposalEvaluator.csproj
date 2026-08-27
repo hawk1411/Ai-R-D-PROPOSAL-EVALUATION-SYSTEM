@@ -6,6 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>frontend</RootNamespace>
     <AssemblyName>frontend</AssemblyName>
+    <DefaultItemExcludes>$(DefaultItemExcludes);Services/ReportService.cs;Services/DocumentParserService.cs;Services/EvaluationOrchestrator.cs;Services/FinancialService.cs;Services/MlEvaluationService.cs;Services/NarrativeService.cs;Services/NoveltyService.cs;Services/ReviewerChatService.cs;Data/**</DefaultItemExcludes>
   </PropertyGroup>
 
 </Project>
