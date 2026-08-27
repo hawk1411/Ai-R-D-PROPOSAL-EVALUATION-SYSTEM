@@ -1,80 +1,177 @@
 @page "/chat"
+@using frontend.Services
 @inject IReviewerChatService ChatService
+@inject IEvaluationService EvaluationService
 
 <PageTitle>Reviewer Agent Chat</PageTitle>
 
-<div class="container-fluid">
-    <h1 class="display-6 fw-bold mb-3 text-info">
-        <i class="bi bi-chat-dots"></i> Reviewer Agent Chat
-    </h1>
+<div class="mb-4">
+    <h3 class="font-weight-extrabold mb-1">
+        <i class="fa-solid fa-robot"></i> AI Reviewer Chat
+    </h3>
+    <p class="text-secondary small mb-0">Ask questions about your last evaluated proposal and get AI-powered feedback</p>
+</div>
 
-    @if (Index.LastEvaluation is null)
-    {
-        <div class="alert alert-warning">
-            ⚠ Please evaluate a proposal first on the <a href="/">Home</a> page.
-        </div>
-    }
-    else
-    {
-        <p class="text-secondary mb-3">
-            Ask questions such as: <em>Why low score? How to improve? What are the main risks?</em>
+@if (_lastEvaluation is null)
+{
+    <div class="glass-card p-5 text-center">
+        <i class="fa-solid fa-comments fa-3x text-muted mb-3" style="opacity: 0.4;"></i>
+        <h5 class="text-light mb-2">No Proposal Evaluated Yet</h5>
+        <p class="text-secondary mb-4">
+            You need to evaluate a proposal first before chatting with the AI Reviewer.
         </p>
-
-        <div class="card glass-card mb-3">
-            <div class="card-body">
-                <div class="input-group input-group-lg">
-                    <InputText @bind-Value="_question" class="form-control bg-dark text-light border-secondary"
-                               placeholder="Enter your question..." @onkeydown="OnKeyDown" />
-                    <button class="btn btn-primary" @onclick="Ask" disabled="@_busy">
-                        @if (_busy)
-                        {
-                            <span class="spinner-border spinner-border-sm"></span>
-                        }
-                        else
-                        {
-                            <i class="bi bi-send"></i>
-                        }
-                        Ask Reviewer
+        <a href="/evaluate" class="btn-primary">
+            <i class="fa-solid fa-file-arrow-up me-1"></i> Evaluate a Proposal
+        </a>
+    </div>
+}
+else
+{
+    <div class="row g-4">
+        <!-- Left: Context Card -->
+        <div class="col-lg-4">
+            <div class="glass-card h-100">
+                <h6 class="font-weight-bold text-indigo-400 mb-3">
+                    <i class="fa-solid fa-file-lines me-1"></i> Active Proposal
+                </h6>
+                <div class="mb-2">
+                    <span class="small text-muted">Title</span>
+                    <div class="text-light font-weight-semibold">@_lastEvaluation.ProposalTitle</div>
+                </div>
+                <div class="mb-2">
+                    <span class="small text-muted">Score</span>
+                    <div class="text-light font-weight-semibold">@_lastEvaluation.OverallScore.ToString("F1") / 100</div>
+                </div>
+                <div class="mb-2">
+                    <span class="small text-muted">Tier</span>
+                    <div><span class="badge-pill badge-emerald">@_lastEvaluation.ScoreTier</span></div>
+                </div>
+                <hr style="border-color: rgba(255,255,255,0.08);" />
+                <div class="small text-muted mb-2">
+                    <i class="fa-solid fa-lightbulb text-warning me-1"></i> Sample Questions
+                </div>
+                <div class="d-flex flex-column gap-2">
+                    <button class="btn btn-sm text-start px-3 py-2" style="background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.2); color: #a5b4fc; border-radius: 8px; font-size: 0.8rem;"
+                            @onclick='() => AskSample("Why did this proposal receive this score?")'>
+                        Why did this proposal receive this score?
+                    </button>
+                    <button class="btn btn-sm text-start px-3 py-2" style="background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.2); color: #a5b4fc; border-radius: 8px; font-size: 0.8rem;"
+                            @onclick='() => AskSample("How can I improve this proposal?")'>
+                        How can I improve this proposal?
+                    </button>
+                    <button class="btn btn-sm text-start px-3 py-2" style="background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.2); color: #a5b4fc; border-radius: 8px; font-size: 0.8rem;"
+                            @onclick='() => AskSample("What are the main risks identified?")'>
+                        What are the main risks identified?
                     </button>
                 </div>
             </div>
         </div>
 
-        <div class="chat-history">
-            @foreach (var msg in _history)
-            {
-                if (msg.Role == "user")
-                {
-                    <div class="chat-bubble user mb-3">
-                        <strong>👤 You</strong><br />@msg.Text
+        <!-- Right: Chat Area -->
+        <div class="col-lg-8">
+            <div class="glass-card d-flex flex-column" style="min-height: 500px;">
+                <!-- Chat Messages -->
+                <div class="flex-grow-1 overflow-auto mb-3 p-1" style="max-height: 420px;" id="chatMessages">
+                    @if (_history.Count == 0)
+                    {
+                        <div class="text-center text-muted py-5">
+                            <i class="fa-solid fa-message fa-2x mb-3" style="opacity: 0.3;"></i>
+                            <p class="small">Start a conversation with the AI Reviewer.<br/>Ask anything about the proposal above.</p>
+                        </div>
+                    }
+                    @foreach (var msg in _history)
+                    {
+                        if (msg.Role == "user")
+                        {
+                            <div class="d-flex justify-content-end mb-3">
+                                <div class="px-3 py-2" style="background: rgba(99, 102, 241, 0.2); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 12px 12px 0 12px; max-width: 80%;">
+                                    <div class="small font-weight-bold text-indigo-400 mb-1">
+                                        <i class="fa-solid fa-user me-1"></i> You
+                                    </div>
+                                    <div class="text-light small">@msg.Text</div>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="d-flex justify-content-start mb-3">
+                                <div class="px-3 py-2" style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 12px 12px 12px 0; max-width: 80%;">
+                                    <div class="small font-weight-bold mb-1" style="color: #34d399;">
+                                        <i class="fa-solid fa-robot me-1"></i> AI Reviewer
+                                    </div>
+                                    <div class="text-light small" style="white-space: pre-wrap;">@msg.Text</div>
+                                </div>
+                            </div>
+                        }
+                    }
+                    @if (_busy)
+                    {
+                        <div class="d-flex justify-content-start mb-3">
+                            <div class="px-3 py-2" style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 12px 12px 12px 0;">
+                                <div class="small font-weight-bold mb-1" style="color: #34d399;">
+                                    <i class="fa-solid fa-robot me-1"></i> AI Reviewer
+                                </div>
+                                <div class="d-flex align-items-center gap-2 text-muted small">
+                                    <span class="spinner-border spinner-border-sm"></span> Thinking...
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <!-- Input Area -->
+                <div class="mt-auto" style="border-top: 1px solid rgba(255,255,255,0.06); padding-top: 1rem;">
+                    <div class="d-flex gap-2">
+                        <input type="text" @bind="_question" @bind:event="oninput" @onkeydown="OnKeyDown"
+                               class="form-control"
+                               style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #e5e7eb; border-radius: 10px;"
+                               placeholder="Ask a question about the proposal..." disabled="@_busy" />
+                        <button class="btn-primary px-4" @onclick="Ask" disabled="@(_busy || string.IsNullOrWhiteSpace(_question))" style="border-radius: 10px; white-space: nowrap;">
+                            @if (_busy)
+                            {
+                                <span class="spinner-border spinner-border-sm"></span>
+                            }
+                            else
+                            {
+                                <i class="fa-solid fa-paper-plane"></i>
+                            }
+                            <span class="ms-1">Send</span>
+                        </button>
                     </div>
-                }
-                else
-                {
-                    <div class="chat-bubble ai mb-3">
-                        <strong>🤖 Reviewer Agent</strong><br />
-                        <div style="white-space:pre-wrap;">@msg.Text</div>
-                    </div>
-                }
-            }
+                </div>
+            </div>
         </div>
-    }
-</div>
+    </div>
+}
 
 @code {
     private string _question = "";
     private bool _busy;
     private List<(string Role, string Text)> _history = new();
+    private frontend.Models.EvaluationResult? _lastEvaluation;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Try to load the most recent evaluation
+        var evaluations = await EvaluationService.GetEvaluationsAsync();
+        _lastEvaluation = evaluations?.FirstOrDefault();
+    }
 
     private async Task OnKeyDown(KeyboardEventArgs e)
     {
-        if (e.Key == "Enter")
+        if (e.Key == "Enter" && !_busy && !string.IsNullOrWhiteSpace(_question))
             await Ask();
+    }
+
+    private async Task AskSample(string question)
+    {
+        _question = question;
+        await Ask();
     }
 
     private async Task Ask()
     {
-        if (string.IsNullOrWhiteSpace(_question) || Index.LastEvaluation is null)
+        if (string.IsNullOrWhiteSpace(_question) || _lastEvaluation is null)
             return;
 
         var q = _question.Trim();
@@ -85,14 +182,27 @@
 
         try
         {
-            var eval = Index.LastEvaluation;
-            var summary = $"Final Score: {eval.FinalScore}, Decision: {eval.Decision}";
-            var answer = await ChatService.AskAsync(q, eval.ProposalText, summary);
+            var summary = $"Title: {_lastEvaluation.ProposalTitle}, Overall Score: {_lastEvaluation.OverallScore:F1}/100, Tier: {_lastEvaluation.ScoreTier}, Recommendation: {_lastEvaluation.Narrative?.FinalRecommendation ?? "N/A"}";
+            
+            // Build a text context from the evaluation narrative
+            var proposalContext = $"""
+                Proposal: {_lastEvaluation.ProposalTitle}
+                Category: {_lastEvaluation.Category}
+                PI: {_lastEvaluation.PrincipalInvestigator}
+                Institution: {_lastEvaluation.Institution}
+                Budget: {_lastEvaluation.RequestedBudget?.ToString("C") ?? "Not specified"}
+                Executive Summary: {_lastEvaluation.Narrative?.ExecutiveSummary ?? "N/A"}
+                Key Strengths: {string.Join(", ", _lastEvaluation.Narrative?.KeyStrengths ?? new())}
+                Identified Risks: {string.Join(", ", _lastEvaluation.Narrative?.IdentifiedRisks ?? new())}
+                Budget Assessment: {_lastEvaluation.Narrative?.BudgetAssessment ?? "N/A"}
+                """;
+
+            var answer = await ChatService.AskAsync(q, proposalContext, summary);
             _history.Add(("ai", answer));
         }
         catch (Exception ex)
         {
-            _history.Add(("ai", $"Error: {ex.Message}"));
+            _history.Add(("ai", $"I encountered an error while processing your question: {ex.Message}. Please try again."));
         }
         finally
         {

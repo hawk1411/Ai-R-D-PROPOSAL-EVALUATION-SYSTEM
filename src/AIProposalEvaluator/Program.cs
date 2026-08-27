@@ -11,6 +11,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+builder.Services.AddHttpClient();
 builder.Services.AddScoped<HttpClient>(sp => new HttpClient());
 builder.Services.AddScoped<ThemeService>();
 builder.Services.AddScoped<IEvaluationService, EvaluationService>();
