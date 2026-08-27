@@ -1,0 +1,10 @@
+# .gitignore for .NET / Blazor Project
+bin/
+obj/
+scratch/
+.vs/
+.vscode/
+.idea/
+*.user
+*.userosscache
+*.sln.docstates

@@ -1,0 +1,19 @@
+@using Microsoft.AspNetCore.Components.Routing
+
+<Router AppAssembly="typeof(Program).Assembly">
+    <Found Context="routeData">
+        <RouteView RouteData="routeData" DefaultLayout="typeof(frontend.Layout.MainLayout)" />
+        <FocusOnNavigate RouteData="routeData" Selector="h1" />
+    </Found>
+    <NotFound>
+        <PageTitle>Not found</PageTitle>
+        <LayoutView Layout="typeof(frontend.Layout.MainLayout)">
+            <div class="text-center py-5">
+                <i class="fa-solid fa-triangle-exclamation fs-1 text-warning mb-3"></i>
+                <h3>Page Not Found</h3>
+                <p class="text-secondary">Sorry, there's nothing at this address.</p>
+                <a href="" class="btn btn-primary mt-2">Return to Dashboard</a>
+            </div>
+        </LayoutView>
+    </NotFound>
+</Router>
