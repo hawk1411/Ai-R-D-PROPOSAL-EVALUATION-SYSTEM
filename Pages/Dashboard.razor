@@ -1,0 +1,183 @@
+@page "/"
+@using frontend.Models
+@using frontend.Services
+@inject IEvaluationService EvaluationService
+@inject NavigationManager NavigationManager
+
+<div class="glass-card-hero mb-4">
+    <div class="row align-items-center">
+        <div class="col-lg-8">
+            <span class="badge-pill badge-indigo mb-3">
+                <i class="fa-solid fa-sparkles"></i> AI-Powered Decision Support System
+            </span>
+            <h1 class="display-6 font-weight-extrabold hero-title mb-2">
+                Automated R&D Proposal Evaluation & Explainability
+            </h1>
+            <p class="text-secondary lead mb-4" style="max-width: 680px; font-size: 1.05rem;">
+                Upload research proposal PDFs for instant ML scoring, 95% confidence intervals, TreeSHAP feature attributions, and GenAI narrative generation.
+            </p>
+            <div class="d-flex flex-wrap gap-3">
+                <button class="btn-primary" @onclick='() => NavigationManager.NavigateTo("evaluate")'>
+                    <i class="fa-solid fa-file-arrow-up"></i> Evaluate New Proposal
+                </button>
+                <button class="btn-secondary" @onclick='() => NavigationManager.NavigateTo("history")'>
+                    <i class="fa-solid fa-timeline"></i> View Past History
+                </button>
+            </div>
+        </div>
+        <div class="col-lg-4 d-none d-lg-block text-center">
+            <div class="p-4 rounded-circle mx-auto" style="width: 160px; height: 160px; background: rgba(99, 102, 241, 0.1); border: 2px dashed rgba(99, 102, 241, 0.4); display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-glow);">
+                <i class="fa-solid fa-brain fs-1 text-indigo-400"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Metrics Cards Row -->
+<div class="metrics-grid">
+    <div class="glass-card metric-card">
+        <div class="metric-icon-box metric-icon-indigo">
+            <i class="fa-solid fa-folder-tree"></i>
+        </div>
+        <div>
+            <div class="metric-val text-indigo-400">@(Evaluations?.Count ?? 0)</div>
+            <div class="metric-label">Total Evaluated Proposals</div>
+        </div>
+    </div>
+
+    <div class="glass-card metric-card">
+        <div class="metric-icon-box metric-icon-emerald">
+            <i class="fa-solid fa-chart-line"></i>
+        </div>
+        <div>
+            <div class="metric-val text-emerald-400">@AvgScore.ToString("F1")</div>
+            <div class="metric-label">Mean System Score (0-100)</div>
+        </div>
+    </div>
+
+    <div class="glass-card metric-card">
+        <div class="metric-icon-box metric-icon-cyan">
+            <i class="fa-solid fa-award"></i>
+        </div>
+        <div>
+            <div class="metric-val text-cyan-400">@HighPotentialCount</div>
+            <div class="metric-label">Fundable Tier 1 Proposals (≥75)</div>
+        </div>
+    </div>
+
+    <div class="glass-card metric-card">
+        <div class="metric-icon-box metric-icon-amber">
+            <i class="fa-solid fa-shield-halved"></i>
+        </div>
+        <div>
+            <div class="metric-val text-amber-400">±@AvgStdDev.ToString("F1")</div>
+            <div class="metric-label">Avg Prediction Uncertainty</div>
+        </div>
+    </div>
+</div>
+
+<!-- Dimensional Scoring Breakdown Overview -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-6">
+        <div class="glass-card h-100">
+            <h5 class="font-weight-bold mb-3 d-flex align-items-center gap-2">
+                <i class="fa-solid fa-layer-group text-indigo-400"></i> Dimensional Score Distribution
+            </h5>
+            <p class="small text-secondary mb-4">Average scores across R&D evaluation dimensions</p>
+
+            <div class="mb-3">
+                <div class="d-flex justify-content-between small font-weight-bold mb-1">
+                    <span>Technical Novelty Score (Weight: 40%)</span>
+                    <span class="text-emerald-400">@AvgNovelty.ToString("F1") / 100</span>
+                </div>
+                <div class="shap-bar-track">
+                    <div class="shap-bar-fill shap-bar-positive" style="width: @AvgNovelty.ToString("F1")%;"></div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <div class="d-flex justify-content-between small font-weight-bold mb-1">
+                    <span>Feasibility & Methodology (Weight: 35%)</span>
+                    <span class="text-indigo-400">@AvgFeasibility.ToString("F1") / 100</span>
+                </div>
+                <div class="shap-bar-track">
+                    <div class="shap-bar-fill" style="width: @AvgFeasibility.ToString("F1")%; background: #6366F1;"></div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <div class="d-flex justify-content-between small font-weight-bold mb-1">
+                    <span>Financial Realism & Budget (Weight: 25%)</span>
+                    <span class="text-cyan-400">@AvgFinancial.ToString("F1") / 100</span>
+                </div>
+                <div class="shap-bar-track">
+                    <div class="shap-bar-fill" style="width: @AvgFinancial.ToString("F1")%; background: #06B6D4;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="glass-card h-100">
+            <h5 class="font-weight-bold mb-3 d-flex align-items-center gap-2">
+                <i class="fa-solid fa-circle-check text-emerald-400"></i> Decision Support Pipeline Summary
+            </h5>
+            <div class="d-flex flex-column gap-3 mt-3">
+                <div class="d-flex align-items-center gap-3 p-3 border-radius-10" style="background-color: var(--bg-input); border-radius: 10px;">
+                    <i class="fa-solid fa-file-pdf fs-3 text-rose-400"></i>
+                    <div>
+                        <strong class="d-block font-weight-bold">PDF Extraction & Ingestion</strong>
+                        <span class="small text-muted">Supports vector embeddings & PyPDF text extraction</span>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-3 p-3 border-radius-10" style="background-color: var(--bg-input); border-radius: 10px;">
+                    <i class="fa-solid fa-tree fs-3 text-emerald-400"></i>
+                    <div>
+                        <strong class="d-block font-weight-bold">ML Ensemble & SHAP XAI</strong>
+                        <span class="small text-muted">TreeSHAP feature importance & local explanations</span>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-3 p-3 border-radius-10" style="background-color: var(--bg-input); border-radius: 10px;">
+                    <i class="fa-solid fa-wand-magic-sparkles fs-3 text-amber-400"></i>
+                    <div>
+                        <strong class="d-block font-weight-bold">GenAI Narrative & PDF Reports</strong>
+                        <span class="small text-muted">Automated human-readable narrative & downloadable report</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Evaluation History Table Component -->
+<EvaluationHistoryTable Evaluations="@Evaluations" OnDataChanged="@LoadEvaluations" />
+
+@code {
+    private List<EvaluationResult>? Evaluations;
+
+    private double AvgScore => Evaluations?.Any() == true ? Evaluations.Average(e => e.OverallScore) : 0.0;
+    private int HighPotentialCount => Evaluations?.Count(e => e.OverallScore >= 75.0) ?? 0;
+    private double AvgStdDev => Evaluations?.Any() == true ? Evaluations.Average(e => e.Confidence?.StdDeviation ?? 2.0) : 0.0;
+
+    private double AvgNovelty => Evaluations?.Any() == true
+        ? Evaluations.Average(e => e.DimensionalScores.FirstOrDefault(d => d.Name.Contains("Novelty"))?.Score ?? e.OverallScore)
+        : 85.0;
+
+    private double AvgFeasibility => Evaluations?.Any() == true
+        ? Evaluations.Average(e => e.DimensionalScores.FirstOrDefault(d => d.Name.Contains("Feasibility"))?.Score ?? e.OverallScore)
+        : 78.0;
+
+    private double AvgFinancial => Evaluations?.Any() == true
+        ? Evaluations.Average(e => e.DimensionalScores.FirstOrDefault(d => d.Name.Contains("Financial"))?.Score ?? e.OverallScore)
+        : 74.0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadEvaluations();
+    }
+
+    private async Task LoadEvaluations()
+    {
+        Evaluations = await EvaluationService.GetEvaluationsAsync();
+    }
+}

@@ -1,0 +1,31 @@
+@page "/history"
+@using frontend.Models
+@using frontend.Services
+@inject IEvaluationService EvaluationService
+@inject NavigationManager NavigationManager
+
+<div class="mb-4 d-flex align-items-center justify-content-between">
+    <div>
+        <h3 class="font-weight-extrabold mb-1">Proposal Evaluation History</h3>
+        <p class="text-secondary small mb-0">Search, filter, and inspect past R&D proposal evaluations and downloadable reports</p>
+    </div>
+    <button class="btn-primary" @onclick='() => NavigationManager.NavigateTo("evaluate")'>
+        <i class="fa-solid fa-plus me-1"></i> New Evaluation
+    </button>
+</div>
+
+<EvaluationHistoryTable Evaluations="@Evaluations" OnDataChanged="@LoadEvaluations" />
+
+@code {
+    private List<EvaluationResult>? Evaluations;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadEvaluations();
+    }
+
+    private async Task LoadEvaluations()
+    {
+        Evaluations = await EvaluationService.GetEvaluationsAsync();
+    }
+}
