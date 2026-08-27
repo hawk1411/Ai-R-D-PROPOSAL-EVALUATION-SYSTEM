@@ -14,6 +14,7 @@ builder.Services.AddRazorComponents()
 builder.Services.AddScoped<HttpClient>(sp => new HttpClient());
 builder.Services.AddScoped<ThemeService>();
 builder.Services.AddScoped<IEvaluationService, EvaluationService>();
+builder.Services.AddScoped<IReviewerChatService, ReviewerChatService>();
 
 var app = builder.Build();
 

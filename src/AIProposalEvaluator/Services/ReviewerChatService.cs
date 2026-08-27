@@ -2,7 +2,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 
-namespace AIProposalEvaluator.Services;
+namespace frontend.Services;
 
 public interface IReviewerChatService
 {
