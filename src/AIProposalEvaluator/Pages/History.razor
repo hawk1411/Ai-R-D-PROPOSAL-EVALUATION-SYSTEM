@@ -1,0 +1,25 @@
+@page "/history"
+@using frontend.Models
+@using frontend.Services
+@inject IEvaluationService EvaluationService
+
+<div class="mb-4">
+    <h3 class="font-weight-extrabold mb-1">Proposal Evaluation History</h3>
+    <p class="text-secondary small mb-0">Inspect past AI evaluated research proposals, SHAP feature attributions, and GenAI narratives</p>
+</div>
+
+<EvaluationHistoryTable Evaluations="@Evaluations" OnDataChanged="@LoadEvaluations" />
+
+@code {
+    private List<EvaluationResult>? Evaluations;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadEvaluations();
+    }
+
+    private async Task LoadEvaluations()
+    {
+        Evaluations = await EvaluationService.GetEvaluationsAsync();
+    }
+}

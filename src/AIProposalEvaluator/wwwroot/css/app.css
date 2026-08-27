@@ -12,7 +12,7 @@
     
     --text-primary: #F3F4F6;
     --text-secondary: #9CA3AF;
-    --text-muted: #6B7280;
+    --text-muted: #94A3B8;
     
     --accent-primary: #6366F1;
     --accent-primary-hover: #4F46E5;
@@ -542,6 +542,74 @@ h1, h2, h3, h4, h5, h6 {
 .form-control-custom:focus {
     border-color: var(--accent-primary);
     box-shadow: var(--shadow-glow);
+}
+
+.form-control-custom option {
+    background-color: var(--bg-card);
+    color: var(--text-primary);
+}
+
+/* Theme Adaptation & Text Utilities */
+.glass-card-hero h1,
+.glass-card-hero .hero-title {
+    color: var(--text-primary);
+}
+
+.text-muted {
+    color: var(--text-muted) !important;
+}
+
+.text-secondary {
+    color: var(--text-secondary) !important;
+}
+
+/* Input Group & Search Component Layout */
+.input-group {
+    display: flex;
+    flex-wrap: nowrap !important;
+    align-items: stretch;
+}
+
+.input-group .form-control-custom {
+    flex: 1;
+    width: auto;
+}
+
+.input-group-text {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    background-color: var(--bg-input);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+    border-right: none;
+    border-top-left-radius: 10px;
+    border-bottom-left-radius: 10px;
+}
+
+.search-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-width: 220px;
+    flex: 1;
+}
+
+.search-input-wrapper .search-icon {
+    position: absolute;
+    left: 14px;
+    color: var(--text-muted);
+    pointer-events: none;
+    font-size: 0.9rem;
+    z-index: 2;
+}
+
+.search-input-wrapper .search-input {
+    padding-left: 2.5rem;
+    width: 100%;
 }
 
 /* Spinner */
